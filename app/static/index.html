@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinAgent — Personal Finance AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4aa;
+    --accent2: #0088ff;
+    --user-bubble: #0d3b6e;
+    --ai-bubble: #0f1f35;
+    --text: #e8edf5;
+    --text-dim: #6b7fa3;
+    --text-dimmer: #3d4f6b;
+    --success: #00d4aa;
+    --danger: #ff4d6d;
+    --gold: #f0b429;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 20% 20%, rgba(0, 136, 255, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 212, 170, 0.04) 0%, transparent 50%);
+    animation: bgShift 12s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes bgShift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(2%, 2%); }
+  }
+
+  /* Header */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 16px 24px;
+    background: rgba(17, 24, 39, 0.95);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span {
+    color: var(--accent);
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .clear-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .clear-btn:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(255, 77, 109, 0.05);
+  }
+
+  /* Main layout */
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-dimmer);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+    padding: 0 8px;
+  }
+
+  .quick-btn {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    line-height: 1.4;
+  }
+
+  .quick-btn:hover {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .quick-btn .q-icon {
+    font-size: 16px;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+  }
+
+  .stats-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 4px;
+  }
+
+  .stats-label {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-dimmer);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .stats-value {
+    font-size: 22px;
+    font-family: 'DM Serif Display', serif;
+    color: var(--accent);
+  }
+
+  .stats-sub {
+    font-size: 11px;
+    color: var(--text-dimmer);
+    margin-top: 2px;
+  }
+
+  /* Chat area */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Messages */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Welcome screen */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    gap: 16px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .welcome-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, rgba(0, 136, 255, 0.15), rgba(0, 212, 170, 0.15));
+    border: 1px solid rgba(0, 212, 170, 0.2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+  }
+
+  .welcome h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .welcome p {
+    font-size: 15px;
+    color: var(--text-dim);
+    max-width: 380px;
+    line-height: 1.6;
+  }
+
+  .welcome-hints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 8px;
+    max-width: 500px;
+  }
+
+  .hint-chip {
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .hint-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0, 212, 170, 0.05);
+  }
+
+  /* Message bubbles */
+  .message {
+    display: flex;
+    gap: 12px;
+    animation: msgIn 0.3s ease both;
+    max-width: 800px;
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user {
+    flex-direction: row-reverse;
+    align-self: flex-end;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .avatar.ai {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+  }
+
+  .avatar.user {
+    background: var(--user-bubble);
+    border: 1px solid rgba(0, 136, 255, 0.3);
+  }
+
+  .bubble {
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 620px;
+  }
+
+  .bubble.ai {
+    background: var(--ai-bubble);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .bubble.user {
+    background: var(--user-bubble);
+    border: 1px solid rgba(0, 136, 255, 0.2);
+    border-top-right-radius: 4px;
+    color: var(--text);
+  }
+
+  /* Markdown-like styling in bubbles */
+  .bubble strong { color: var(--accent); font-weight: 600; }
+  .bubble em { color: var(--text-dim); }
+
+  .bubble .money-positive { color: var(--success); font-family: 'DM Mono', monospace; font-weight: 500; }
+  .bubble .money-negative { color: var(--danger); font-family: 'DM Mono', monospace; font-weight: 500; }
+
+  /* Typing indicator */
+  .typing {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    animation: msgIn 0.3s ease both;
+  }
+
+  .typing-dots {
+    background: var(--ai-bubble);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    border-top-left-radius: 4px;
+    padding: 16px 18px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dimmer);
+    animation: typingBounce 1.2s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingBounce {
+    0%, 100% { transform: translateY(0); background: var(--text-dimmer); }
+    50% { transform: translateY(-5px); background: var(--accent); }
+  }
+
+  /* Input area */
+  .input-area {
+    padding: 16px 24px 20px;
+    background: rgba(17, 24, 39, 0.95);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+  }
+
+  .input-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+    transition: border-color 0.2s;
+  }
+
+  .input-wrapper:focus-within {
+    border-color: rgba(0, 212, 170, 0.4);
+    box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.05);
+  }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    resize: none;
+    max-height: 120px;
+    line-height: 1.6;
+    padding: 4px 0;
+  }
+
+  textarea::placeholder { color: var(--text-dimmer); }
+
+  .send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover { transform: scale(1.05); opacity: 0.9; }
+  .send-btn:active { transform: scale(0.95); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .send-btn svg { width: 16px; height: 16px; }
+
+  .input-hint {
+    font-size: 11px;
+    color: var(--text-dimmer);
+    margin-top: 8px;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Error message */
+  .error-bubble {
+    background: rgba(255, 77, 109, 0.1);
+    border: 1px solid rgba(255, 77, 109, 0.3);
+    color: var(--danger);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .bubble.ai {
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .bubble.ai h3,
+  .bubble.ai h4,
+  .bubble.ai h5 {
+    margin-top: 12px;
+  }
+  .fin-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <div class="logo-text">Fin<span>Agent</span></div>
+  </div>
+  <div class="header-right">
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span id="txn-count">Loading...</span>
+    </div>
+    <button class="clear-btn" onclick="clearSession()">Clear Chat</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-title">Quick Questions</div>
+
+    <button class="quick-btn" onclick="askQuick('What is my total spending this month?')">
+      <span class="q-icon">📊</span>
+      Total spending this month
+    </button>
+    <button class="quick-btn" onclick="askQuick('What were my biggest expenses?')">
+      <span class="q-icon">💸</span>
+      Biggest expenses
+    </button>
+    <button class="quick-btn" onclick="askQuick('How much did I spend on food and restaurants?')">
+      <span class="q-icon">🍔</span>
+      Food & restaurants
+    </button>
+    <button class="quick-btn" onclick="askQuick('Show me all my subscriptions')">
+      <span class="q-icon">🔄</span>
+      Subscriptions
+    </button>
+    <button class="quick-btn" onclick="askQuick('What is my total income from salary?')">
+      <span class="q-icon">💼</span>
+      Total income
+    </button>
+    <button class="quick-btn" onclick="askQuick('How much did I spend on shopping?')">
+      <span class="q-icon">🛍️</span>
+      Shopping
+    </button>
+    <button class="quick-btn" onclick="getInsights()" style="border: 1px solid rgba(0,212,170,0.2); color: var(--accent);">
+      <span class="q-icon">🔍</span>
+      Analyze & Get Insights
+    </button>
+    <button class="quick-btn" onclick="getReport()" style="border: 1px solid rgba(0,136,255,0.2); color: var(--accent2);">
+      <span class="q-icon">📈</span>
+      Monthly Spending Report
+    </button>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-title" style="margin-top:8px;">Upload Your Data</div>
+    <div style="padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--text-dimmer);margin-bottom:8px;line-height:1.5;">
+        Upload your own bank or credit card statements (CSV format)
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;">
+          🏦 Bank Statement
+        </label>
+        <input
+          type="file"
+          id="bank-upload"
+          accept=".csv"
+          style="width:100%;font-size:11px;color:var(--text-dim);"
+          onchange="uploadFile(this, 'bank')"
+        />
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:4px;">
+          💳 Credit Card Statement
+        </label>
+        <input
+          type="file"
+          id="credit-upload"
+          accept=".csv"
+          style="width:100%;font-size:11px;color:var(--text-dim);"
+          onchange="uploadFile(this, 'credit')"
+        />
+      </div>
+
+      <div id="upload-status" style="font-size:11px;display:none;padding:6px;border-radius:6px;margin-top:4px;"></div>
+    </div>
+
+    <div style="padding:8px;background:rgba(255,77,109,0.05);border:1px solid rgba(255,77,109,0.15);border-radius:8px;margin-bottom:8px;">
+        <div style="font-size:11px;color:var(--text-dimmer);line-height:1.5;">
+          🔒 <strong style="color:var(--text-dim);">Privacy:</strong> Your data is stored temporarily for this session only and deleted when you close the browser or click "Delete My Data".
+        </div>
+        <button
+          onclick="deleteMyData()"
+          style="margin-top:8px;width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,77,109,0.3);background:transparent;color:var(--danger);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;"
+        >
+          🗑️ Delete My Data
+        </button>
+      </div>
+
+    <div class="stats-card">
+      <div class="stats-label">Transactions</div>
+      <div class="stats-value" id="sidebar-count">—</div>
+      <div class="stats-sub">loaded in database</div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🤖</div>
+        <h2>Ask me about your finances</h2>
+        <p>I have access to your bank and credit card transactions. Ask me anything about your spending, income, or financial patterns.</p>
+        <div class="welcome-hints">
+          <div class="hint-chip" onclick="askQuick('What is my total spending?')">Total spending?</div>
+          <div class="hint-chip" onclick="askQuick('Where do I spend the most?')">Biggest expense category?</div>
+          <div class="hint-chip" onclick="askQuick('How much did I spend on food?')">Food spending?</div>
+          <div class="hint-chip" onclick="askQuick('What bills did I pay?')">Bills paid?</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea
+          id="input"
+          placeholder="Ask about your finances..."
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:8000';
+  const SESSION = 'user_' + Math.random().toString(36).substr(2, 9);
+  let isLoading = false;
+
+  // Load transaction count on startup
+  async function loadStats() {
+    try {
+      // Initialize session with sample data first
+      await fetch(`${API}/session/init?session_id=${SESSION}`, {
+        method: 'POST'
+      });
+
+      // Then get transaction count
+      const res = await fetch(`${API}/transactions/count?session_id=${SESSION}`);
+      const data = await res.json();
+      const count = data.total_transactions;
+      document.getElementById('txn-count').textContent = `${count} transactions`;
+      document.getElementById('sidebar-count').textContent = count;
+    } catch (e) {
+      document.getElementById('txn-count').textContent = 'API offline';
+    }
+  }
+
+  // Auto resize textarea
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  // Handle Enter key
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  // Quick question buttons
+  function askQuick(question) {
+    document.getElementById('input').value = question;
+    sendMessage();
+  }
+
+  // Format markdown-like text
+  function formatText(text) {
+    // Process tables first before other replacements
+    let result = text;
+
+    // Handle markdown tables
+    const tableRegex = /(\|.+\|\n)([\|\-\s]+\|\n)((\|.+\|\n?)+)/g;
+    result = result.replace(tableRegex, (match) => {
+      const lines = match.trim().split('\n').filter(l => l.trim());
+      let html = '<table class="fin-table">';
+
+      lines.forEach((line, i) => {
+        if (line.replace(/[\|\-\s]/g, '').length === 0) return;
+        const cells = line.split('|').filter(c => c.trim());
+        const isHeader = i === 0;
+        const tag = isHeader ? 'th' : 'td';
+        const style = isHeader
+          ? 'padding:8px 12px;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);font-family:"DM Mono",monospace;text-align:left;font-weight:500;'
+          : 'padding:6px 12px;border:1px solid var(--border);color:var(--text);font-family:"DM Mono",monospace;';
+        html += '<tr>' + cells.map(c => `<${tag} style="${style}">${c.trim()}</${tag}>`).join('') + '</tr>';
+      });
+
+      html += '</table>';
+      return html;
+    });
+
+    // Now apply rest of formatting
+    return result
+      // H1 headings
+      .replace(/^# (.+)$/gm, '<h3 style="font-family:\'DM Serif Display\',serif;color:var(--accent);font-size:16px;margin:14px 0 8px;letter-spacing:-0.3px;">$1</h3>')
+      // H2 headings
+      .replace(/^## (.+)$/gm, '<h4 style="font-family:\'DM Sans\',sans-serif;color:var(--text);font-size:14px;font-weight:600;margin:12px 0 6px;">$1</h4>')
+      // H3 headings
+      .replace(/^### (.+)$/gm, '<h5 style="color:var(--accent2);font-size:13px;font-weight:600;margin:8px 0 4px;">$1</h5>')
+      // Bold
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--accent);font-weight:600;">$1</strong>')
+      // Italic
+      .replace(/\*(.*?)\*/g, '<em style="color:var(--text-dim);">$1</em>')
+      // Numbered list items with bold title
+      .replace(/^\d+\.\s+\*\*(.+?)\*\*(.*)$/gm, '<div style="margin:10px 0 4px;"><span style="color:var(--accent);font-weight:600;">$1</span><span style="color:var(--text);">$2</span></div>')
+      // Regular numbered list items
+      .replace(/^\d+\.\s+(.+)$/gm, '<div style="margin:5px 0;color:var(--text);">$1</div>')
+      // Bullet points
+      .replace(/^[\-\*]\s+(.+)$/gm, '<div style="margin:3px 0;padding-left:14px;position:relative;color:var(--text-dim);"><span style="position:absolute;left:0;color:var(--accent);">›</span>$1</div>')
+      // Horizontal rules
+      .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">')
+      // Money amounts positive
+      .replace(/\+\$[\d,]+\.?\d*/g, m => `<span style="color:var(--success);font-family:'DM Mono',monospace;font-weight:500;">${m}</span>`)
+      // Money amounts
+      .replace(/\$[\d,]+\.?\d*/g, m => `<span style="color:var(--gold);font-family:'DM Mono',monospace;font-weight:500;">${m}</span>`)
+      // Percentages
+      .replace(/(\d+\.\d+%|\d+%)/g, '<span style="color:var(--accent2);font-family:\'DM Mono\',monospace;">$1</span>')
+      // Paragraph breaks
+      .replace(/\n\n/g, '<div style="margin:8px 0;"></div>')
+      // Line breaks
+      .replace(/\n/g, '<br>');
+  }
+
+  // Add message to chat
+  function addMessage(content, role) {
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+
+    const messages = document.getElementById('messages');
+
+    const msg = document.createElement('div');
+    msg.className = `message ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = `avatar ${role}`;
+    avatar.textContent = role === 'ai' ? '🤖' : '👤';
+
+    const bubble = document.createElement('div');
+    bubble.className = `bubble ${role}`;
+    bubble.innerHTML = role === 'ai' ? formatText(content) : content;
+
+    msg.appendChild(avatar);
+    msg.appendChild(bubble);
+    messages.appendChild(msg);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  // Add typing indicator
+  function addTyping() {
+    const messages = document.getElementById('messages');
+    const typing = document.createElement('div');
+    typing.className = 'typing';
+    typing.id = 'typing';
+    typing.innerHTML = `
+      <div class="avatar ai">🤖</div>
+      <div class="typing-dots">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>`;
+    messages.appendChild(typing);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  // Remove typing indicator
+  function removeTyping() {
+    const typing = document.getElementById('typing');
+    if (typing) typing.remove();
+  }
+
+  // Send message
+  async function sendMessage() {
+    if (isLoading) return;
+
+    const input = document.getElementById('input');
+    const question = input.value.trim();
+    if (!question) return;
+
+    // Clear input
+    input.value = '';
+    input.style.height = 'auto';
+
+    // Show user message
+    addMessage(question, 'user');
+
+    // Show typing
+    isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+    addTyping();
+
+    try {
+      const res = await fetch(`${API}/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, session_id: SESSION })
+      });
+
+      const data = await res.json();
+      removeTyping();
+
+      if (res.ok) {
+        addMessage(data.answer, 'ai');
+      } else {
+        addMessage(`Error: ${data.detail || 'Something went wrong'}`, 'ai');
+      }
+    } catch (e) {
+      removeTyping();
+      addMessage('Could not connect to FinAgent API. Make sure the server is running.', 'ai');
+    }
+
+    isLoading = false;
+    document.getElementById('send-btn').disabled = false;
+    input.focus();
+  }
+
+  // Clear session
+  async function clearSession() {
+    try {
+      await fetch(`${API}/session/${SESSION}`, { method: 'DELETE' });
+    } catch (e) {}
+
+    const messages = document.getElementById('messages');
+    messages.innerHTML = `
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🤖</div>
+        <h2>Ask me about your finances</h2>
+        <p>I have access to your bank and credit card transactions. Ask me anything about your spending, income, or financial patterns.</p>
+        <div class="welcome-hints">
+          <div class="hint-chip" onclick="askQuick('What is my total spending?')">Total spending?</div>
+          <div class="hint-chip" onclick="askQuick('Where do I spend the most?')">Biggest expense category?</div>
+          <div class="hint-chip" onclick="askQuick('How much did I spend on food?')">Food spending?</div>
+          <div class="hint-chip" onclick="askQuick('What bills did I pay?')">Bills paid?</div>
+        </div>
+      </div>`;
+  }
+
+  // Get proactive insights
+  async function getInsights() {
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+
+    addMessage('Analyze my finances and give me insights', 'user');
+    addTyping();
+    isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+
+    try {
+      const res = await fetch(`${API}/insights?session_id=${SESSION}`);
+      const data = await res.json();
+      removeTyping();
+      addMessage(data.insights, 'ai');
+    } catch (e) {
+      removeTyping();
+      addMessage('Could not generate insights. Make sure the server is running.', 'ai');
+    }
+
+    isLoading = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+
+  async function getReport() {
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+
+    addMessage('Generate my monthly spending report by category', 'user');
+    addTyping();
+    isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+
+    try {
+      const res = await fetch(`${API}/report?session_id=${SESSION}`);
+      const data = await res.json();
+      removeTyping();
+      addMessage(data.report, 'ai');
+    } catch (e) {
+      removeTyping();
+      addMessage('Could not generate report. Make sure the server is running.', 'ai');
+    }
+
+    isLoading = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+
+
+  // Upload CSV file
+  async function uploadFile(input, fileType) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const status = document.getElementById('upload-status');
+    status.style.display = 'block';
+    status.style.background = 'rgba(0,212,170,0.05)';
+    status.style.border = '1px solid rgba(0,212,170,0.2)';
+    status.style.color = 'var(--accent)';
+    status.textContent = `Uploading ${file.name}...`;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(
+        `${API}/ingest/csv?session_id=${SESSION}&file_type=${fileType}`,
+        { method: 'POST', body: formData }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        status.textContent = `✅ ${data.message}`;
+        // Update transaction count
+        document.getElementById('txn-count').textContent = `${data.total} transactions`;
+        document.getElementById('sidebar-count').textContent = data.total;
+        // Show success in chat
+        addMessage(`I've uploaded your ${fileType === 'bank' ? 'bank statement' : 'credit card statement'} — ${data.message}. You can now ask me questions about your transactions!`, 'ai');
+      } else {
+        status.style.background = 'rgba(255,77,109,0.05)';
+        status.style.border = '1px solid rgba(255,77,109,0.2)';
+        status.style.color = 'var(--danger)';
+        status.textContent = `❌ ${data.detail || 'Upload failed'}`;
+      }
+    } catch (e) {
+      status.style.background = 'rgba(255,77,109,0.05)';
+      status.style.border = '1px solid rgba(255,77,109,0.2)';
+      status.style.color = 'var(--danger)';
+      status.textContent = '❌ Upload failed. Check server connection.';
+    }
+  }
+
+  // Delete user data
+  async function deleteMyData() {
+    if (!confirm('Are you sure you want to delete all your data? This cannot be undone.')) return;
+
+    try {
+      // Clear session memory
+      await fetch(`${API}/session/${SESSION}`, { method: 'DELETE' });
+
+      // Reinitialize with sample data
+      await fetch(`${API}/session/init?session_id=${SESSION}`, { method: 'POST' });
+
+      // Update count
+      const res = await fetch(`${API}/transactions/count?session_id=${SESSION}`);
+      const data = await res.json();
+      document.getElementById('txn-count').textContent = `${data.total_transactions} transactions`;
+      document.getElementById('sidebar-count').textContent = data.total_transactions;
+
+      // Clear chat
+      const messages = document.getElementById('messages');
+      messages.innerHTML = `
+        <div class="welcome" id="welcome">
+          <div class="welcome-icon">🤖</div>
+          <h2>Ask me about your finances</h2>
+          <p>Your data has been deleted. Sample data has been reloaded.</p>
+          <div class="welcome-hints">
+            <div class="hint-chip" onclick="askQuick('What is my total spending?')">Total spending?</div>
+            <div class="hint-chip" onclick="askQuick('Where do I spend the most?')">Biggest expense category?</div>
+            <div class="hint-chip" onclick="askQuick('How much did I spend on food?')">Food spending?</div>
+            <div class="hint-chip" onclick="askQuick('What bills did I pay?')">Bills paid?</div>
+          </div>
+        </div>`;
+
+      // Reset file inputs
+      document.getElementById('bank-upload').value = '';
+      document.getElementById('credit-upload').value = '';
+      document.getElementById('upload-status').style.display = 'none';
+
+    } catch (e) {
+      alert('Failed to delete data. Please try again.');
+    }
+  }
+
+  // Init
+  loadStats();
+  document.getElementById('input').focus();
+</script>
+</body>
+</html>

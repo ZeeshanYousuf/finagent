@@ -1,0 +1,37 @@
+# Environment variables - NEVER commit this
+.env
+
+# Python virtual environment
+venv/
+
+# ChromaDB data - contains personal financial data
+chroma_db/
+
+# Logs
+logs/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Real personal data - only sample data should be committed
+app/data/uploaded_*.csv
+app/data/statement.csv
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage
