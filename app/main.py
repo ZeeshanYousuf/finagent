@@ -50,9 +50,8 @@ class QuestionResponse(BaseModel):
 # Routes - like controllers in CakePHP/Laravel
 @app.get("/")
 def root():
-    """Health check endpoint"""
-    logger.info("Health check called")
-    return {"status": "ok", "message": "FinAgent API is running"}
+    logger.info("Root accessed - redirecting to chat")
+    return FileResponse("app/static/index.html")
 
 @app.get("/chat")
 def chat_page():
