@@ -4,6 +4,9 @@ A production-grade RAG (Retrieval-Augmented Generation) application that lets us
 
 Built as a portfolio project to demonstrate agentic AI development, RAG pipelines, and full-stack Python engineering.
 
+## 🌐 Live Demo
+👉 [https://finagent.zeeshanyousuf.io](https://finagent.zeeshanyousuf.io)
+
 ---
 
 ## 🎯 What It Does
