@@ -89,7 +89,7 @@ finagent/
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/finagent.git
+git clone https://github.com/ZeeshanYousuf/finagent.git
 cd finagent
 
 # Create virtual environment
