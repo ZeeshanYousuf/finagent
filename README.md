@@ -2,7 +2,7 @@
 
 A production-grade RAG (Retrieval-Augmented Generation) application that lets users have natural conversations about their personal finances using Claude AI.
 
-Built as a portfolio project to demonstrate agentic AI development, RAG pipelines, and full-stack Python engineering.
+Built to explore agentic AI development, RAG pipelines, and full-stack Python engineering.
 
 ## 🌐 Live Demo
 👉 [https://finagent.zeeshanyousuf.io](https://finagent.zeeshanyousuf.io)
