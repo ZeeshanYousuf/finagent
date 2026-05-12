@@ -177,17 +177,6 @@ Automatic request validation via Pydantic models, built-in OpenAPI docs at /docs
 
 ---
 
-## 🏦 Built For
-
-This project was built to demonstrate:
-- Production-grade RAG pipeline implementation
-- Agentic AI development patterns
-- Python full-stack development
-- Financial data processing and analysis
-- Multi-user session management
-
----
-
 ## .env.example
 
 Create a `.env` file with the following:
